@@ -71,15 +71,31 @@ in {
         after = keyCfg.requires;
         requires = keyCfg.requires;
 
+        serviceConfig.TimeoutStartSec = "infinity";
+        serviceConfig.Restart = "always";
+        serviceConfig.RestartSec = "100ms";
+        path = [ pkgs.inotifyTools ];
+
         script = /* sh */ ''
+          rm -rf ${keyCfg.target}
           mkdir -p ${dirOf keyCfg.target}
           chmod 755 ${dirOf keyCfg.target}
           cp -r ${keyCfg.source} ${keyCfg.target}
           chown -R ${keyCfg.user} ${keyCfg.target}
           chmod -R 700 ${keyCfg.target}
+
+          inotifywait --quiet --event delete_self "${keyCfg.target}" &
+          if [[ ! -e "${keyCfg.target}" ]]; then
+            echo 'flapped up'
+            exit 0
+          fi
+          wait %1
         '';
       }
     ));
+
+
+
 
   };
 }
