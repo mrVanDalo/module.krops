@@ -22,14 +22,15 @@ from starting.
 can be used to copy a key to a file that can be read by a user
 
 ```nix
-krops.userKeys = {
+krops.userKeys."foobar" = {
   user = "foobar";
   source = config.krops.keys."foobar".path;
   requires = [ "${config.krops.keys."foobar".serviceName}.service" ];
   requireBy = [ "foobar.service" ];
 }
 ```
-Will create a service that waits until the `/run/keys/foobar` is present
+Will create a service `key.foobar.user.service` that waits until
+the `/run/keys/foobar` is present
 and than copy it to a place where it can be read by the user `foobar`.
 
 
