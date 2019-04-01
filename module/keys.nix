@@ -61,30 +61,44 @@ in {
     systemd.services = (flip mapAttrs' cfg (name: keyCfg:
       nameValuePair keyCfg.serviceName {
         enable = true;
-        requiredBy = keyCfg.requiredBy;
+
         before = keyCfg.requiredBy;
-        serviceConfig.TimeoutStartSec = "infinity";
-        serviceConfig.Restart = "always";
-        serviceConfig.RestartSec = "100ms";
+        requiredBy = keyCfg.requiredBy;
+
+        serviceConfig = {
+          TimeoutStartSec = "infinity";
+          Restart = "always";
+          RestartSec = "100ms";
+        };
         path = [ pkgs.inotifyTools ];
+
         preStart = /* sh */ ''
           (while read f; do if [ "$f" = "${baseNameOf keyCfg.path}" ]; then break; fi; done \
             < <(inotifywait --quiet --monitor --format '%f' --event create,move ${dirOf keyCfg.path}) ) &
-          if [[ -e "${keyCfg.path}" ]]; then
+
+          # check if already exists
+          if [[ -e "${keyCfg.path}" ]]
+          then
             echo 'flapped down'
             kill %1
             exit 0
           fi
+
+          # wait for inotifywait
           wait %1
         '';
+
         script = /* sh */ ''
           inotifywait --quiet --event delete_self "${keyCfg.path}" &
           if [[ ! -e "${keyCfg.path}" ]]; then
             echo 'flapped up'
             exit 0
           fi
+
+          # wait for inotifywait
           wait %1
         '';
+
       }
     ));
 
