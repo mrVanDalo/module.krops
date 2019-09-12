@@ -26,7 +26,7 @@ krops.userKeys."foobar" = {
   user = "foobar";
   source = config.krops.keys."foobar".path;
   requires = [ "${config.krops.keys."foobar".serviceName}.service" ];
-  requireBy = [ "foobar.service" ];
+  requiredBy = [ "foobar.service" ];
 }
 ```
 
